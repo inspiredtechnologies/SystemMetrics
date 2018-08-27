@@ -51,7 +51,8 @@ namespace SystemMetrics
 
             foreach (var sensor in hardwareItem.Sensors)
             {
-              if (sensor.SensorType == SensorType.Temperature && sensor.Name.StartsWith("CPU Package", StringComparison.InvariantCultureIgnoreCase))
+              if (sensor.SensorType == SensorType.Temperature && sensor.Name.StartsWith("CPU Package", 
+                StringComparison.InvariantCultureIgnoreCase))
               {
                 return (sensor.Value != null ? sensor.Value.Value : -1.0);
               }

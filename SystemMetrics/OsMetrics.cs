@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Management;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -29,10 +30,6 @@ namespace SystemMetrics
     public static long TotalPhysicalMemory { get; set; }
     public static float NetworkBandwidth { get; set; }
 
-    [DllImport("kernel32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    static extern bool GetPhysicallyInstalledSystemMemory(out long TotalMemoryInKilobytes);
-
     // ----------------------------------------------------------
 
     #region Public Methods
@@ -54,14 +51,8 @@ namespace SystemMetrics
     {
       try
       {
-        long totalPhysicalMemory;
-        if (!GetPhysicallyInstalledSystemMemory(out totalPhysicalMemory))
-          return 0;   // error
-        else
-          TotalPhysicalMemory = totalPhysicalMemory;
-
         double availableMBytes = (double)_PerfMemCounter.NextValue();
-        totalPhysicalMemory /= 1024;
+        double totalPhysicalMemory = (double)GetInstalledPhysicalMemory() / 1024;
         return (int)((totalPhysicalMemory - availableMBytes) * 100.0 / (double)totalPhysicalMemory);
       }
       catch
@@ -80,11 +71,16 @@ namespace SystemMetrics
       {
         if (TotalPhysicalMemory == 0)
         {
-          long totalPhysicalMemory;
-          if (!GetPhysicallyInstalledSystemMemory(out totalPhysicalMemory))
-            return 0;   // error
-          else
-            TotalPhysicalMemory = totalPhysicalMemory;
+          long totalPhysicalMemory = 0;
+          if (!SafeNativeMethods.GetPhysicallyInstalledSystemMemory(out totalPhysicalMemory))
+            totalPhysicalMemory = 0;
+          TotalPhysicalMemory = totalPhysicalMemory;
+
+          if (TotalPhysicalMemory == 0)
+          {
+            // error; retry using WMI
+            TotalPhysicalMemory = GetInstalledPhysicalMemoryWmi();
+          }
         }
         return TotalPhysicalMemory;
       }
@@ -236,6 +232,30 @@ namespace SystemMetrics
     #endregion
 
     // ----------------------------------------------------------
+
+    private static long GetInstalledPhysicalMemoryWmi()
+    {
+      try
+      {
+        using (ManagementObjectSearcher searcher =
+            new ManagementObjectSearcher("root\\CIMV2", "SELECT * FROM Win32_ComputerSystem"))
+        {
+          foreach (ManagementObject queryObj in searcher.Get())
+          {
+            long value = 0;
+            if (long.TryParse(queryObj["TotalPhysicalMemory"].ToString(), out value))
+              return value / 1024;
+            else
+              return 0;
+          }
+        }
+        return 0;
+      }
+      catch
+      {
+        throw;
+      }
+    }
 
   }
 }

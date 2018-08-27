@@ -10,5 +10,9 @@ namespace SystemMetrics
   {
     [DllImport("kernel32")]
     extern public static UInt64 GetTickCount64();
+
+    [DllImport("kernel32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    extern public static bool GetPhysicallyInstalledSystemMemory(out long TotalMemoryInKilobytes);
   }
 }

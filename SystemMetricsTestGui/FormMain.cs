@@ -26,7 +26,7 @@ namespace SystemMetricsTestGui
         }
         cmbNwInterfaces.SelectedIndex = 0;
 
-        tsslInstalledRam.Text = (OsMetrics.GetInstalledPhysicalMemory() / 1024 / 1024).ToString() + " GB";
+        tsslInstalledRam.Text = ((double)OsMetrics.GetInstalledPhysicalMemory() / 1024 / 1024).ToString("0.0") + " GB";
       }
       catch (Exception ex)
       {
@@ -69,12 +69,15 @@ namespace SystemMetricsTestGui
         }
         item.SubItems[3].Text = double.IsNaN(nwUtil) ? string.Empty : nwUtil.ToString("0.0") + " %";
 
-        item.SubItems[4].Text = HardwareMetrics.GetCpuTemperature().ToString("0.0") + " °C";
+        double temperature = HardwareMetrics.GetCpuTemperature();
+        item.SubItems[4].Text = (temperature == 0.0) ? string.Empty : temperature.ToString("0.0") + " °C";
 
-        double systemTemperature = HardwareMetrics.GetMainBoardTemperature();
-        item.SubItems[5].Text = (systemTemperature == 0.0) ? string.Empty : systemTemperature.ToString("0.0") + " °C";
+        temperature = HardwareMetrics.GetMainBoardTemperature();
+        item.SubItems[5].Text = (temperature == 0.0) ? string.Empty : temperature.ToString("0.0") + " °C";
 
-        item.SubItems[6].Text = HardwareMetrics.GetHddTemperature().ToString("0.0") + " °C";
+        temperature = HardwareMetrics.GetHddTemperature();
+        item.SubItems[6].Text = (temperature == 0.0) ? string.Empty : temperature.ToString("0.0") + " °C";
+
         item.SubItems[7].Text = HardwareMetrics.GetHddUsage().ToString("0.0") + " %";
         item.SubItems[8].Text = (100.0 - OsMetrics.GetDiskUtilization(driveName)).ToString("0.0") + " %";
 
